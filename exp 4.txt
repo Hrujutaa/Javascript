@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Palindrome Checker</title>
+</head>
+<body>
+
+  <h2>Palindrome Checker</h2>
+
+  Enter text: <input type="text" id="inputText"><br><br>
+  <button onclick="checkPalindrome()">Check</button>
+  <button onclick="showCount()">Show Check Count</button>
+
+  <p id="error" style="color:red;"></p>
+  <h3 id="result"></h3>
+
+  <script>
+    const inputBox = document.getElementById('inputText');
+    const errorDisplay = document.getElementById('error');
+    const resultDisplay = document.getElementById('result');
+
+    // ---- closure example ----
+    // createCounter() returns a function that "remembers" its own
+    // private `count` variable via closure — count is not accessible
+    // from outside except through the returned function.
+    function createCounter() {
+      let count = 0;
+      return function () {
+        count++;
+        return count;
+      };
+    }
+    const countChecks = createCounter(); // usable function, private state
+
+    // ---- function declaration ----
+    function cleanText(str) {
+      return str.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    // ---- function expression ----
+    const reverseText = function (str) {
+      return str.split('').reverse().join('');
+    };
+
+    // ---- arrow function ----
+    const isPalindrome = (str) => str === reverseText(str);
+
+    function checkPalindrome() {
+      errorDisplay.textContent = '';
+      resultDisplay.textContent = '';
+
+      try {
+        const raw = inputBox.value;
+
+        // ---- validation via thrown errors ----
+        if (raw === undefined || raw === null) {
+          throw new Error('No input received.');
+        }
+
+        if (raw.trim() === '') {
+          throw new Error('Input cannot be empty.');
+        }
+
+        const cleaned = cleanText(raw);
+
+        if (cleaned === '') {
+          throw new Error('Input must contain letters or numbers.');
+        }
+
+        const result = isPalindrome(cleaned);
+        const checkNumber = countChecks(); // closure in action
+
+        resultDisplay.innerHTML = `
+          Input: "${raw}" <br>
+          Cleaned: "${cleaned}" <br>
+          Result: ${result ? 'Palindrome ✅' : 'Not a Palindrome ❌'} <br>
+          (Check #${checkNumber})
+        `;
+
+      } catch (err) {
+        // ---- try/catch handling ----
+        errorDisplay.textContent = `Error: ${err.message}`;
+      } finally {
+        inputBox.focus();
+      }
+    }
+
+    function showCount() {
+      try {
+        // calling countChecks() here also increments it,
+        // demonstrating the closure keeps state between calls
+        const current = countChecks();
+        resultDisplay.textContent = `Total checks performed so far: ${current}`;
+      } catch (err) {
+        errorDisplay.textContent = `Error: ${err.message}`;
+      }
+    }
+  </script>
+
+</body>
+</html>

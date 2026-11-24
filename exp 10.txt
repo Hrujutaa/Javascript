@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JSON Table Loader</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <h2>Users (via fetch)</h2>
+  <button onclick="loadWithFetch()">Load with fetch()</button>
+  <table border="1" id="fetchTable"></table>
+
+  <h2>Users (via jQuery)</h2>
+  <button onclick="loadWithJQuery()">Load with $.getJSON()</button>
+  <table border="1" id="jqueryTable"></table>
+
+  <script>
+    const API = 'https://jsonplaceholder.typicode.com/users';
+
+    // ---- fetch() version ----
+    function loadWithFetch() {
+      fetch(API)
+        .then(response => {
+          if (!response.ok) throw new Error('Network error');
+          return response.json();
+        })
+        .then(data => renderTable(data, 'fetchTable'))
+        .catch(err => console.error('Fetch error:', err.message));
+    }
+
+    // ---- jQuery $.getJSON() version ----
+    function loadWithJQuery() {
+      $.getJSON(API, function (data) {
+        renderTable(data, 'jqueryTable');
+      }).fail(function () {
+        console.error('jQuery getJSON failed');
+      });
+    }
+
+    function renderTable(data, tableId) {
+      const table = document.getElementById(tableId);
+      let html = '<tr><th>Name</th><th>Email</th><th>City</th></tr>';
+
+      data.forEach(user => {
+        html += `
+          <tr>
+            <td>${user.name}</td>
+            <td>${user.email}</td>
+            <td>${user.address.city}</td>
+          </tr>
+        `;
+      });
+
+      table.innerHTML = html;
+    }
+  </script>
+</body>
+</html>

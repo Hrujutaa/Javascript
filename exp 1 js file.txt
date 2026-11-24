@@ -1,0 +1,41 @@
+// External JS file
+console.log('External JS: file loaded successfully');
+
+// time-based greeting using the user's clock
+const hour = new Date().getHours();
+let greetingText;
+
+if (hour < 12) {
+  greetingText = 'Good Morning';
+} else if (hour < 17) {
+  greetingText = 'Good Afternoon';
+} else {
+  greetingText = 'Good Evening';
+}
+
+document.getElementById('greeting').textContent = `${greetingText}! Today is ${new Date().toDateString()}.`;
+
+function showSystemInfo() {
+  const info = {
+    Browser: navigator.userAgent,
+    Platform: navigator.platform,
+    Language: navigator.language,
+    'Screen Resolution': `${screen.width} x ${screen.height}`,
+    'Online Status': navigator.onLine ? 'Online' : 'Offline'
+  };
+
+  // console.group keeps related logs together
+  console.group('User Environment Information');
+  Object.entries(info).forEach(([key, value]) => console.log(`${key}:`, value));
+  console.groupEnd();
+
+  console.table(info);
+
+  document.getElementById('systemInfo').innerHTML = Object.entries(info)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join('<br>');
+}
+
+window.addEventListener('load', function () {
+  console.warn('External JS: page fully loaded, ready for interaction');
+});

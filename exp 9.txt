@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head><title>Theme Preferences</title></head>
+<body style="font-family:sans-serif;">
+  <h2>Theme Settings</h2>
+
+  Theme:
+  <select id="theme">
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+  </select>
+  <button onclick="saveTheme()">Save (localStorage)</button>
+  <br><br>
+
+  Session Note: <input type="text" id="note">
+  <button onclick="saveNote()">Save (sessionStorage)</button>
+
+  <p id="status"></p>
+
+  <script>
+    const themeSelect = document.getElementById('theme');
+    const noteInput = document.getElementById('note');
+    const status = document.getElementById('status');
+
+    function applyTheme(theme) {
+      document.body.style.background = theme === 'dark' ? '#222' : '#fff';
+      document.body.style.color = theme === 'dark' ? '#eee' : '#000';
+    }
+
+    function saveTheme() {
+      const theme = themeSelect.value;
+      localStorage.setItem('theme', theme); // persists across sessions
+      applyTheme(theme);
+      status.textContent = `Theme "${theme}" saved permanently.`;
+    }
+
+    function saveNote() {
+      const note = noteInput.value;
+      sessionStorage.setItem('note', note); // cleared when tab closes
+      status.textContent = `Note saved for this session only.`;
+    }
+
+    // on page load: restore saved values
+    window.addEventListener('load', () => {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        themeSelect.value = savedTheme;
+        applyTheme(savedTheme);
+      }
+
+      const savedNote = sessionStorage.getItem('note');
+      if (savedNote) noteInput.value = savedNote;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cart Total Calculator</title>
+</head>
+<body>
+
+  <h2>Cart Total Calculator</h2>
+
+  <div id="cart"></div>
+  <button onclick="renderCart()">Refresh Cart</button>
+  <button onclick="applyDiscountCode()">Apply Discount Code</button>
+  <br><br>
+  Discount Code: <input type="text" id="discountCode" placeholder="e.g. SAVE10">
+  <p id="message"></p>
+  <h3 id="summary"></h3>
+
+  <script>
+    // ---- object handling: array of cart item objects ----
+    const cart = [
+      { id: 1, name: 'Keyboard', price: 1200, qty: 1 },
+      { id: 2, name: 'Mouse',    price: 600,  qty: 2 },
+      { id: 3, name: 'Monitor',  price: 8500, qty: 1 },
+      { id: 4, name: 'USB Cable', price: 150, qty: 3 }
+    ];
+
+    // discount codes stored as an object (key -> percentage)
+    const discountCodes = {
+      SAVE10: 10,
+      SAVE20: 20,
+      WELCOME5: 5
+    };
+
+    let activeDiscountPercent = 0; // let, changes when a code is applied
+
+    const cartDiv = document.getElementById('cart');
+    const messageDisplay = document.getElementById('message');
+    const summaryDisplay = document.getElementById('summary');
+    const codeInput = document.getElementById('discountCode');
+
+    function renderCart() {
+      // ---- array method: map ----
+      const rows = cart.map(item => `
+        <div>
+          ${item.name} — Qty: ${item.qty} — Price: ₹${item.price} — 
+          Subtotal: ₹${item.price * item.qty}
+        </div>
+      `).join('');
+
+      cartDiv.innerHTML = rows;
+      calculateSummary();
+    }
+
+    function applyDiscountCode() {
+      const code = codeInput.value.trim().toUpperCase();
+
+      // ---- object handling: checking key existence ----
+      if (code === '') {
+        messageDisplay.textContent = 'Please enter a discount code.';
+        activeDiscountPercent = 0;
+      } else if (Object.prototype.hasOwnProperty.call(discountCodes, code)) {
+        activeDiscountPercent = discountCodes[code];
+        messageDisplay.textContent = `Code applied: ${code} (${activeDiscountPercent}% off)`;
+      } else {
+        activeDiscountPercent = 0;
+        messageDisplay.textContent = `Invalid code: ${code}`;
+      }
+
+      calculateSummary();
+    }
+
+    function calculateSummary() {
+      // ---- array method: reduce ----
+      const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+      // ---- array method: filter ----
+      const expensiveItems = cart.filter(item => item.price * item.qty > 1000);
+
+      // ---- array method: find ----
+      const mostExpensive = cart.reduce((max, item) =>
+        item.price > max.price ? item : max, cart[0]);
+
+      // ---- array method: forEach ----
+      let itemCountTotal = 0;
+      cart.forEach(item => {
+        itemCountTotal += item.qty;
+      });
+
+      // discount logic
+      const discountAmount = subtotal * (activeDiscountPercent / 100);
+      let taxableAmount = subtotal - discountAmount;
+
+      // bulk discount logic: extra 5% off if total items > 5
+      let bulkDiscountApplied = false;
+      if (itemCountTotal > 5) {
+        const bulkDiscount = taxableAmount * 0.05;
+        taxableAmount -= bulkDiscount;
+        bulkDiscountApplied = true;
+      }
+
+      const tax = taxableAmount * 0.05; // flat 5% tax
+      const grandTotal = taxableAmount + tax;
+
+      summaryDisplay.innerHTML = `
+        Total items: ${itemCountTotal} <br>
+        Subtotal: ₹${subtotal.toFixed(2)} <br>
+        Discount (${activeDiscountPercent}%): -₹${discountAmount.toFixed(2)} <br>
+        Bulk discount (5%, if items > 5): ${bulkDiscountApplied ? 'Applied' : 'Not applied'} <br>
+        Tax (5%): +₹${tax.toFixed(2)} <br>
+        Expensive items (>₹1000): ${expensiveItems.map(i => i.name).join(', ') || 'None'} <br>
+        Highest priced item: ${mostExpensive.name} <br>
+        <b>Grand Total: ₹${grandTotal.toFixed(2)}</b>
+      `;
+    }
+
+    // initial render
+    renderCart();
+  </script>
+
+</body>
+</html>

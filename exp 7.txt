@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head><title>To-Do List</title></head>
+<body>
+  <h2>To-Do List</h2>
+
+  <input type="text" id="taskInput" placeholder="Enter task">
+  <button onclick="addTask()">Add</button>
+  <ul id="taskList"></ul>
+
+  <script>
+    const taskInput = document.getElementById('taskInput');
+    const taskList = document.getElementById('taskList');
+
+    function addTask() {
+      const text = taskInput.value.trim();
+      if (text === '') return;
+
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span>${text}</span>
+        <button onclick="editTask(this)">Edit</button>
+        <button onclick="deleteTask(this)">Delete</button>
+      `;
+      taskList.appendChild(li);
+      taskInput.value = '';
+    }
+
+    function editTask(btn) {
+      // DOM traversal: find the <li> ancestor, then the <span> inside it
+      const li = btn.closest('li');
+      const span = li.querySelector('span');
+
+      const newText = prompt('Edit task:', span.textContent);
+      if (newText !== null && newText.trim() !== '') {
+        span.textContent = newText.trim();
+      }
+    }
+
+    function deleteTask(btn) {
+      const li = btn.closest('li');
+      li.remove();
+    }
+  </script>
+</body>
+</html>

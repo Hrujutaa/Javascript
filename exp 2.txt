@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Billing Calculator</title>
+</head>
+<body>
+
+  <h2>Billing Calculator</h2>
+
+  <div id="items"></div>
+  <button onclick="addItem()">+ Add Item</button>
+  <br><br>
+
+  Tax %: <input type="number" id="tax" value="10">
+  <br><br>
+  <h3 id="total"></h3>
+
+  <script>
+    // var - old style, function scoped
+    var itemCount = 0;
+
+    // const - never reassigned
+    const items = [];
+    const itemsDiv = document.getElementById('items');
+    const taxInput = document.getElementById('tax');
+    const totalDisplay = document.getElementById('total');
+
+    // let - reassignable
+    let grandTotal = 0;
+
+    function addItem() {
+      itemCount++;
+      const id = itemCount;
+
+      items.push({ id, name: 'Item', qty: 1, price: 0 });
+      render();
+    }
+
+    function removeItem(id) {
+      const index = items.findIndex(item => item.id === id);
+      items.splice(index, 1);
+      render();
+    }
+
+    function updateItem(id, field, value) {
+      const item = items.find(item => item.id === id);
+      item[field] = field === 'name' ? value : Number(value);
+      calculateTotal();
+    }
+
+    function render() {
+      itemsDiv.innerHTML = '';
+
+      for (let i = 0; i < items.length; i++) {
+        // destructuring
+        const { id, name, qty, price } = items[i];
+
+        // template literal for row HTML
+        itemsDiv.innerHTML += `
+          <div>
+            <input value="${name}" onchange="updateItem(${id},'name',this.value)">
+            <input type="number" value="${qty}" onchange="updateItem(${id},'qty',this.value)">
+            <input type="number" value="${price}" onchange="updateItem(${id},'price',this.value)">
+            <button onclick="removeItem(${id})">x</button>
+          </div>
+        `;
+      }
+
+      calculateTotal();
+    }
+
+    function calculateTotal() {
+      let subtotal = 0;
+
+      // destructuring inside reduce
+      subtotal = items.reduce((sum, { qty, price }) => sum + qty * price, 0);
+
+      const taxRate = Number(taxInput.value);
+      const taxAmount = subtotal * (taxRate / 100);
+      grandTotal = subtotal + taxAmount;
+
+      // template literal for output
+      totalDisplay.innerHTML = `Subtotal: $${subtotal.toFixed(2)} | Tax: $${taxAmount.toFixed(2)} | Total: $${grandTotal.toFixed(2)}`;
+    }
+
+    taxInput.addEventListener('input', calculateTotal);
+
+    // seed one row
+    addItem();
+  </script>
+
+</body>
+</html>

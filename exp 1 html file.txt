@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome Page</title>
+</head>
+<body>
+
+  <h1 id="welcome"></h1>
+  <p id="greeting"></p>
+
+  Name: <input type="text" id="name"><br><br>
+  Age: <input type="number" id="age"><br><br>
+
+  <!-- INLINE JS: written directly in the tag -->
+  <button onclick="console.log('Inline JS: button clicked')">Log Click (Inline)</button>
+  <button onclick="showUser()">Show User Info (Internal)</button>
+  <button onclick="showSystemInfo()">Show System Info (External)</button>
+
+  <p id="error" style="color:red;"></p>
+  <h3>User Info</h3>
+  <div id="userInfo"></div>
+  <h3>System Info</h3>
+  <div id="systemInfo"></div>
+
+  <!-- INTERNAL JS: inside a script tag in this file -->
+  <script>
+    console.info('Internal JS: page script loaded');
+
+    document.getElementById('welcome').textContent = 'Welcome to the JavaScript Demo Page!';
+
+    function showUser() {
+      const name = document.getElementById('name').value.trim();
+      const age = document.getElementById('age').value.trim();
+      const error = document.getElementById('error');
+      error.textContent = '';
+
+      if (name === '' || age === '') {
+        console.error('Internal JS: name or age is missing');
+        error.textContent = 'Please enter both name and age.';
+        return;
+      }
+
+      if (Number(age) < 1 || Number(age) > 120) {
+        console.warn('Internal JS: unusual age entered:', age);
+      }
+
+      console.table({ name, age });
+      document.getElementById('userInfo').innerHTML =
+        `Name: ${name}<br>Age: ${age}<br>Welcome, ${name}!`;
+    }
+  </script>
+
+  <!-- EXTERNAL JS: loaded from a separate file -->
+  <script src="external.js"></script>
+
+</body>
+</html>

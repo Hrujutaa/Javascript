@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Class Scheduler</title>
+  <style>
+    body { font-family: sans-serif; margin: 16px; }
+    #cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .card { border: 1px solid #aaa; padding: 10px; border-radius: 6px; }
+    .ongoing { background: #e6f7e6; }
+    .completed { background: #eee; color: #777; }
+    #toast { position: fixed; bottom: 16px; right: 16px; background: #333; color: #fff; padding: 10px 14px; border-radius: 6px; }
+    input { max-width: 100%; }
+  </style>
+</head>
+<body>
+  <h2>Class Scheduler</h2>
+  <h3>Current time: <span id="clock"></span></h3>
+  <p id="nextInfo"></p>
+
+  <input type="text" id="subject" placeholder="Subject">
+  Start: <input type="time" id="start">
+  End: <input type="time" id="end">
+  <button id="addBtn">Add Class</button>
+  <button id="pauseBtn">Pause Updates</button>
+  <p id="error" style="color:red;"></p>
+
+  <div id="cards"></div>
+  <div id="toast" hidden></div>
+
+  <script type="module">
+    // ============ "timeUtils" section (would be timeUtils.js) ============
+    export const pad = (n) => String(n).padStart(2, '0');
+
+    export function formatClock(date) {
+      return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
+
+    export function timeToDate(timeStr, baseDate = new Date()) {
+      const [h, m] = timeStr.split(':').map(Number);
+      const d = new Date(baseDate);
+      d.setHours(h, m, 0, 0);
+      return d;
+    }
+
+    export function formatDuration(ms) {
+      const totalSec = Math.max(0, Math.floor(ms / 1000));
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+
+    export function escapeHTML(str) {
+      return str.replace(/[&<>"']/g, (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // ============ "scheduler" section (would be scheduler.js) ============
+    export function getStatus(cls, now = new Date()) {
+      const start = timeToDate(cls.start, now);
+      const end = timeToDate(cls.end, now);
+
+      if (now < start) return { state: 'upcoming', ms: start - now };
+      if (now < end) return { state: 'ongoing', ms: end - now };
+      return { state: 'completed', ms: 0 };
+    }
+
+    export class Scheduler {
+      #nextId = 1; // private field
+
+      constructor(initial = []) {
+        this.list = [];
+        initial.forEach(({ subject, start, end }) => this.add(subject, start, end));
+      }
+
+      add(subject, start, end) {
+        if (!subject.trim()) throw new Error('Subject cannot be empty.');
+        if (!start || !end) throw new Error('Start and end time are required.');
+        if (end <= start) throw new Error('End time must be after start time.');
+        this.list.push({ id: this.#nextId++, subject: subject.trim(), start, end });
+      }
+
+      remove(id) {
+        this.list = this.list.filter((cls) => cls.id !== id);
+      }
+
+      getAll() {
+        return [...this.list].sort((a, b) => a.start.localeCompare(b.start));
+      }
+
+      getNext(now = new Date()) {
+        return this.getAll().find((cls) => getStatus(cls, now).state === 'upcoming');
+      }
+    }
+
+    // ============ "main" section (would be main.js) ============
+    // sample classes start 1 and 4 minutes from now so changes are visible live
+    const inMinutes = (n) => {
+      const d = new Date(Date.now() + n * 60000);
+      return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    const scheduler = new Scheduler([
+      { subject: 'JavaScript', start: inMinutes(1), end: inMinutes(3) },
+      { subject: 'Web Design', start: inMinutes(4), end: inMinutes(6) },
+    ]);
+
+    const clockEl = document.getElementById('clock');
+    const nextInfo = document.getElementById('nextInfo');
+    const cardsEl = document.getElementById('cards');
+    const toastEl = document.getElementById('toast');
+    const errorEl = document.getElementById('error');
+
+    let intervalId = null;
+    let toastTimer = null;
+    const lastStates = {};
+
+    // setTimeout: show toast, auto-hide after 4 seconds
+    function showToast(message) {
+      toastEl.textContent = message;
+      toastEl.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toastEl.hidden = true; }, 4000);
+    }
+
+    function tick() {
+      const now = new Date();
+      clockEl.textContent = formatClock(now);
+
+      cardsEl.innerHTML = scheduler.getAll().map((cls) => {
+        const { state, ms } = getStatus(cls, now);
+
+        if (lastStates[cls.id] && lastStates[cls.id] !== state) {
+          showToast(`${cls.subject} is now ${state}`);
+        }
+        lastStates[cls.id] = state;
+
+        const label = state === 'upcoming' ? `Starts in ${formatDuration(ms)}`
+                    : state === 'ongoing'  ? `Ends in ${formatDuration(ms)}`
+                    : 'Completed';
+
+        return `
+          <div class="card ${state}">
+            <b>${escapeHTML(cls.subject)}</b><br>
+            ${cls.start} - ${cls.end}<br>
+            ${label}<br>
+            <button data-remove="${cls.id}">Remove</button>
+          </div>`;
+      }).join('');
+
+      const next = scheduler.getNext(now);
+      nextInfo.textContent = next
+        ? `Next class: ${next.subject} in ${formatDuration(getStatus(next, now).ms)}`
+        : 'No upcoming classes today.';
+    }
+
+    // setInterval: refresh every second
+    function startTicking() {
+      tick();
+      intervalId = setInterval(tick, 1000);
+    }
+
+    function stopTicking() {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+
+    document.getElementById('addBtn').addEventListener('click', () => {
+      errorEl.textContent = '';
+      try {
+        scheduler.add(
+          document.getElementById('subject').value,
+          document.getElementById('start').value,
+          document.getElementById('end').value
+        );
+        tick();
+      } catch (err) {
+        errorEl.textContent = err.message;
+      }
+    });
+
+    cardsEl.addEventListener('click', (e) => {
+      const id = e.target.dataset.remove;
+      if (id) { scheduler.remove(Number(id)); tick(); }
+    });
+
+    const pauseBtn = document.getElementById('pauseBtn');
+    pauseBtn.addEventListener('click', () => {
+      if (intervalId) {
+        stopTicking();
+        pauseBtn.textContent = 'Resume Updates';
+      } else {
+        startTicking();
+        pauseBtn.textContent = 'Pause Updates';
+      }
+    });
+
+    startTicking();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live User Directory</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 16px; }
+    body.dark { background: #222; color: #eee; }
+    #grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .card { border: 1px solid #999; border-radius: 6px; padding: 10px; }
+    .card.fav { border: 2px solid goldenrod; }
+    input[type="text"] { max-width: 100%; }
+  </style>
+</head>
+<body>
+  <h2>Live User Directory</h2>
+
+  <input type="text" id="search" placeholder="Search name, email, city">
+  <label><input type="checkbox" id="favOnly"> Favorites only</label>
+  <button id="refreshBtn">Refresh Now</button>
+  <button id="clearFavBtn">Clear Favorites</button>
+  <button id="themeBtn">Toggle Theme</button>
+
+  <p id="status"></p>
+  <p id="stats"></p>
+  <div id="grid"></div>
+
+  <script>
+    $(function () {
+      const API_URL = 'https://jsonplaceholder.typicode.com/users';
+      const REFRESH_SECONDS = 30;
+
+      let users = [];
+      let secondsLeft = REFRESH_SECONDS;
+      let showFavsOnly = false;
+
+      // ---------- STORAGE ----------
+      // localStorage: persists after the browser is closed
+      let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+      if (localStorage.getItem('theme') === 'dark') $('body').addClass('dark');
+
+      // sessionStorage: lasts only for this tab
+      $('#search').val(sessionStorage.getItem('search') || '');
+
+      // ---------- AJAX ----------
+      function loadUsers() {
+        $('#status').css('color', '').text('Loading...');
+
+        $.ajax({
+          url: API_URL,
+          method: 'GET',
+          dataType: 'json',
+          success: function (data) {
+            users = data;
+            const count = Number(sessionStorage.getItem('refreshes') || 0) + 1;
+            sessionStorage.setItem('refreshes', count);
+            $('#status').text(
+              `Last updated: ${new Date().toLocaleTimeString()} | Refreshes this session: ${count}`
+            );
+            render();
+          },
+          error: function (xhr, textStatus) {
+            $('#status').css('color', 'red').text(`Failed to load data (${textStatus}).`);
+          },
+          complete: function () {
+            secondsLeft = REFRESH_SECONDS; // reset countdown after every request
+          }
+        });
+      }
+
+      // ---------- DOM ----------
+      function render() {
+        const term = $('#search').val().trim().toLowerCase();
+
+        const list = users.filter(function (u) {
+          const text = `${u.name} ${u.email} ${u.address.city}`.toLowerCase();
+          return text.includes(term) && (!showFavsOnly || favorites.includes(u.id));
+        });
+
+        const $grid = $('#grid').empty();
+
+        if (list.length === 0) {
+          $grid.append($('<p>').text('No users found.'));
+        }
+
+        $.each(list, function (_, u) {
+          const isFav = favorites.includes(u.id);
+
+          const $card = $('<div>')
+            .addClass('card')
+            .toggleClass('fav', isFav)
+            .data('id', u.id)
+            .append($('<h4>').text(u.name))
+            .append($('<div>').text(u.email))
+            .append($('<div>').text(`City: ${u.address.city}`))
+            .append($('<div>').text(`Company: ${u.company.name}`))
+            .append($('<button>').addClass('fav-btn').text(isFav ? '★ Remove favorite' : '☆ Add favorite'));
+
+          $grid.append($card);
+        });
+
+        $('#stats').text(`Showing ${list.length} of ${users.length} | Favorites: ${favorites.length}`);
+      }
+
+      // ---------- EVENTS ----------
+      // live search while typing
+      $('#search').on('input', function () {
+        sessionStorage.setItem('search', $(this).val());
+        render();
+      });
+
+      $('#favOnly').on('change', function () {
+        showFavsOnly = $(this).is(':checked');
+        render();
+      });
+
+      // event delegation: works for cards created after page load
+      $('#grid').on('click', '.fav-btn', function () {
+        const id = $(this).closest('.card').data('id'); // DOM traversal
+
+        if (favorites.includes(id)) {
+          favorites = favorites.filter(function (f) { return f !== id; });
+        } else {
+          favorites.push(id);
+        }
+
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+        render();
+      });
+
+      $('#clearFavBtn').on('click', function () {
+        favorites = [];
+        localStorage.removeItem('favorites');
+        render();
+      });
+
+      $('#themeBtn').on('click', function () {
+        $('body').toggleClass('dark');
+        localStorage.setItem('theme', $('body').hasClass('dark') ? 'dark' : 'light');
+      });
+
+      $('#refreshBtn').on('click', loadUsers);
+
+      // ---------- REAL TIME ----------
+      // runs every second: counts down, then re-fetches automatically
+      setInterval(function () {
+        secondsLeft--;
+        $('#stats').attr('title', `Next auto-refresh in ${secondsLeft}s`);
+        if (secondsLeft <= 0) loadUsers();
+      }, 1000);
+
+      loadUsers();
+    });
+  </script>
+</body>
+</html>

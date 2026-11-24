@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Grading System</title>
+</head>
+<body>
+
+  <h2>Grading System</h2>
+
+  Name: <input type="text" id="name"><br><br>
+  Marks (0-100): <input type="number" id="marks"><br><br>
+  <button onclick="calculateGrade()">Submit</button>
+
+  <p id="error" style="color:red;"></p>
+  <h3 id="result"></h3>
+
+  <script>
+    const nameInput = document.getElementById('name');
+    const marksInput = document.getElementById('marks');
+    const errorDisplay = document.getElementById('error');
+    const resultDisplay = document.getElementById('result');
+
+    function calculateGrade() {
+      errorDisplay.textContent = '';
+      resultDisplay.textContent = '';
+
+      const name = nameInput.value.trim();
+      const marks = marksInput.value.trim();
+
+      // ---- form validation ----
+      if (name === '') {
+        errorDisplay.textContent = 'Error: Name cannot be empty.';
+        return;
+      }
+
+      if (marks === '') {
+        errorDisplay.textContent = 'Error: Marks cannot be empty.';
+        return;
+      }
+
+      if (isNaN(marks)) {
+        errorDisplay.textContent = 'Error: Marks must be a number.';
+        return;
+      }
+
+      const score = Number(marks);
+
+      if (score < 0 || score > 100) {
+        errorDisplay.textContent = 'Error: Marks must be between 0 and 100.';
+        return;
+      }
+
+      // ---- control structures: if / else if / else ----
+      let grade;
+      let remark;
+
+      if (score >= 90) {
+        grade = 'A+';
+        remark = 'Outstanding';
+      } else if (score >= 80) {
+        grade = 'A';
+        remark = 'Excellent';
+      } else if (score >= 70) {
+        grade = 'B';
+        remark = 'Very Good';
+      } else if (score >= 60) {
+        grade = 'C';
+        remark = 'Good';
+      } else if (score >= 50) {
+        grade = 'D';
+        remark = 'Pass';
+      } else {
+        grade = 'F';
+        remark = 'Fail';
+      }
+
+      // ---- control structure: switch (extra pass/fail category) ----
+      let status;
+      switch (true) {
+        case (score >= 50):
+          status = 'PASS';
+          break;
+        default:
+          status = 'FAIL';
+      }
+
+      resultDisplay.innerHTML = `
+        Student: ${name} <br>
+        Marks: ${score} <br>
+        Grade: ${grade} (${remark}) <br>
+        Status: ${status}
+      `;
+    }
+  </script>
+
+</body>
+</html>

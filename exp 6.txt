@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head><title>String & Regex Tool</title></head>
+<body>
+  <h2>String & Regex Analyzer</h2>
+
+  Email: <input type="text" id="email"><br><br>
+  <button onclick="validateEmail()">Validate Email</button>
+  <p id="emailResult"></p>
+
+  <br>
+  Text: <textarea id="text" rows="4" cols="40"></textarea><br><br>
+  <button onclick="analyzeText()">Analyze Text</button>
+  <p id="textResult"></p>
+
+  <script>
+    function validateEmail() {
+      const email = document.getElementById('email').value.trim();
+      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const isValid = regex.test(email);
+      document.getElementById('emailResult').textContent =
+        isValid ? `Valid email: ${email}` : `Invalid email: ${email}`;
+    }
+
+    function analyzeText() {
+      const text = document.getElementById('text').value;
+
+      // string functions
+      const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+      const charCount = text.length;
+      const upperCount = (text.match(/[A-Z]/g) || []).length;
+
+      // regex data extraction
+      const numbers = text.match(/\d+/g) || [];
+      const emails = text.match(/[^\s@]+@[^\s@]+\.[^\s@]+/g) || [];
+
+      document.getElementById('textResult').innerHTML = `
+        Words: ${wordCount} | Characters: ${charCount} | Uppercase letters: ${upperCount} <br>
+        Numbers found: ${numbers.join(', ') || 'None'} <br>
+        Emails found: ${emails.join(', ') || 'None'}
+      `;
+    }
+  </script>
+</body>
+</html>

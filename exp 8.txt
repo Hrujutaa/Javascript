@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head><title>Gym Admission Form</title></head>
+<body>
+  <h2>Gym Admission Form</h2>
+
+  Name: <input type="text" id="name"><span id="nameMsg"></span><br><br>
+  Age: <input type="number" id="age"><span id="ageMsg"></span><br><br>
+  Phone: <input type="text" id="phone"><span id="phoneMsg"></span><br><br>
+  Package:
+  <select id="package">
+    <option value="">-- Select --</option>
+    <option value="Basic">Basic</option>
+    <option value="Premium">Premium</option>
+  </select><span id="packageMsg"></span><br><br>
+
+  <button onclick="submitForm()">Submit</button>
+  <h3 id="result"></h3>
+
+  <script>
+    const name = document.getElementById('name');
+    const age = document.getElementById('age');
+    const phone = document.getElementById('phone');
+    const pkg = document.getElementById('package');
+
+    name.addEventListener('input', () => {
+      document.getElementById('nameMsg').textContent =
+        name.value.trim() === '' ? ' Required' : ' ✓';
+    });
+
+    age.addEventListener('input', () => {
+      const val = Number(age.value);
+      document.getElementById('ageMsg').textContent =
+        val >= 16 && val <= 65 ? ' ✓' : ' Age must be 16–65';
+    });
+
+    phone.addEventListener('input', () => {
+      const valid = /^\d{10}$/.test(phone.value.trim());
+      document.getElementById('phoneMsg').textContent =
+        valid ? ' ✓' : ' Must be 10 digits';
+    });
+
+    pkg.addEventListener('change', () => {
+      document.getElementById('packageMsg').textContent =
+        pkg.value === '' ? ' Select a package' : ' ✓';
+    });
+
+    function submitForm() {
+      const valid =
+        name.value.trim() !== '' &&
+        age.value >= 16 && age.value <= 65 &&
+        /^\d{10}$/.test(phone.value.trim()) &&
+        pkg.value !== '';
+
+      document.getElementById('result').textContent = valid
+        ? `Admission confirmed for ${name.value} (${pkg.value} package)`
+        : 'Please fix the errors above before submitting.';
+    }
+  </script>
+</body>
+</html>
